@@ -74,6 +74,8 @@ module ActiveImap
     def save
       new_mailbox = "#{parent_path}#{title}"
       
+      puts "ActiveImap: Rename #{mailbox} to #{new_mailbox}"
+      
       unless mailbox == new_mailbox     
         @connection.rename mailbox, new_mailbox
         @mailbox = new_mailbox
@@ -83,7 +85,7 @@ module ActiveImap
     
     def attributes=(attribute_values)
       attribute_values.each do |key, value|
-        case key
+        case key.to_sym
         when :title
           @title = value
         when :parent
