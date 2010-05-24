@@ -12,20 +12,21 @@ module ActiveImap
     #define_attribute_methods [:title, :parent_id, :parent]          
 
     attr_writer :title
-    attr_reader :id, :attrs, :errors, :persisted, :connection
+    attr_reader :attrs, :errors, :persisted, :connection
   
     def initialize(connection, options = {})
       @connection = connection
-      @id = options[:id] ||= ''
-      @attrs = options[:attrs] ||= []
-      @persisted = options[:persisted] ||= false
       attributes = options
+      @id = nil
+      @mailbox = options[:mailbox] || nil
+      @attrs = options[:attrs] || []
+      @persisted = options[:persisted] || false      
       
       @errors = ActiveModel::Errors.new(self)
     end
   
-    def ==(other_folder)
-      self.id == other_folder.id
+    def ==(other)
+      self.mailbox.to_s == other.mailbox.to_s
     end
     
     def self.all(connection, options = {})
@@ -38,12 +39,18 @@ module ActiveImap
     end
   
     def self.from_mailbox(connection, mailbox)
-      ActiveImap::Folder.new connection, :id => mailbox.name, :attrs => mailbox.attr, :persisted => true
+      ActiveImap::Folder.new connection, :mailbox => mailbox.name, :attrs => mailbox.attr, :persisted => true
     end
   
-    def self.find(connection, id, options = {})  
-      if id.include? '%'
-        if list = connection.list('', id)
+    def self.find(connection, id, options = {})
+      mailbox = ActiveImap::Folder.id_to_mailbox id
+      
+      ActiveImap::Folder.find_by_mailbox connection, mailbox, options
+    end
+  
+    def self.find_by_mailbox(connection, mailbox_selector, options = {})  
+      if mailbox_selector.include? '%'
+        if list = connection.list('', mailbox_selector)
           folders = []
           list.each do |mailbox|
             folders << ActiveImap::Folder.from_mailbox(connection, mailbox)
@@ -53,7 +60,7 @@ module ActiveImap
           []
         end
       else
-        if list = connection.list('', id)
+        if list = connection.list('', mailbox_selector)
           ActiveImap::Folder.from_mailbox connection, list.first
         else
           nil
@@ -66,13 +73,12 @@ module ActiveImap
     end
     
     def save
-      new_id = Net::IMAP.encode_utf7("#{parent_path}#{title}")
+      new_mailbox = "#{parent_path}#{title}"
       
-      puts "Rename Folder #{id} to #{new_id}"
-      
-      unless id == new_id       
-        @connection.rename id, new_id
-        @id = new_id
+      unless mailbox == new_mailbox     
+        @connection.rename mailbox, new_mailbox
+        @mailbox = new_mailbox
+        @id = nil
         @parent = nil
       end
     end
@@ -99,18 +105,41 @@ module ActiveImap
       update_attributes attribute => value
     end
     
+    def mailbox
+       return @mailbox unless @mailbox.nil?
+
+       if title.blank?
+         @mailbox = ''
+       else
+         @mailbox = "#{parent_path}#{title}"
+       end
+     end  
+    
+    def id
+      ActiveImap::Folder.mailbox_to_id(mailbox) if mailbox
+    end
+    
     def to_key
-      persisted? ? [id.to_s.gsub('.','%2e')] : nil
+      persisted? ? [id] : nil
+    end
+    
+    def to_s
+      "#<ActiveImap::Folder:#{id}>"
+    end
+    
+    def i18n_scope
+      :activeimap
     end
     
     def parent
       return @parent if @parent
-      
-      @parent = ActiveImap::Folder.find(@connection, id.split(ActiveImap.config.separator)[0..-2] * ActiveImap.config.separator)
+      if mailbox
+        @parent = ActiveImap::Folder.find_by_mailbox(@connection, mailbox.split(ActiveImap.config.separator)[0..-2] * ActiveImap.config.separator)
+      end
     end
   
     def parent_id
-      parent.id
+      parent.id if parent
     end
     
     def parent_id=(id)
@@ -124,71 +153,61 @@ module ActiveImap
     
     def title
       return @title if @title
-      if id.split(ActiveImap.config.separator).size > 1
-        @title = Net::IMAP.decode_utf7(id.split(ActiveImap.config.separator).last)
-      else
-        @title = Net::IMAP.decode_utf7(id)
+      if @mailbox and @mailbox.split(ActiveImap.config.separator).size > 1
+        @title = Net::IMAP.decode_utf7(@mailbox.split(ActiveImap.config.separator).last)
+      elsif @mailbox
+        @title = Net::IMAP.decode_utf7(@mailbox)
       end
     end
     
     def path    
-      if id.blank?
+      if @mailbox.blank?
          ''
       else
-        "#{id}#{ActiveImap.config.separator}"
+        "#{@mailbox}#{ActiveImap.config.separator}"
       end
     end
-  
-    def id
-      return @id unless @id.nil?
-     
-      if title.blank?
-        @id = ''
-      else
-        @id = "#{parent_path}#{title}"
-      end
-    end
-    
+      
     def children(options = {})
       return @children if @children and not options[:force]
     
-      @children = ActiveImap::Folder.find(@connection, "#{path}%", options) 
+      @children = ActiveImap::Folder.find_by_mailbox(@connection, "#{path}%", options) 
     end
   
     def create(new_title)
-      new_id = "#{path}#{new_title}"
-      if @connection.create(new_id)
-        ActiveImap::Folder.new @connection, :id => new_id, :title => new_title, :parent => self
+      new_mailbox = "#{path}#{new_title}"
+      if @connection.create(new_mailbox)
+        ActiveImap::Folder.new @connection, :mailbox => new_mailbox, :title => new_title, :parent => self
       else
         false
       end
     end
   
     def destroy
-      @connection.delete(id)
+      @connection.delete(@mailbox)
     end
   
     def select
-      @connection.select(id)
+      @connection.select(@mailbox)
     end
   
     # Messages related
   
     def message_counts
-      status = @connection.status(id, ['MESSAGES', 'RECENT', 'UNSEEN'])
+      status = @connection.status(@mailbox, ['MESSAGES', 'RECENT', 'UNSEEN'])
       {:total => status['MESSAGES'], :recent => status['RECENT'], :unseen => status['UNSEEN']}
     end
 
     def total_message_count
-      @connection.status(id, ['MESSAGES'])['MESSAGES']
+      @connection.status(@mailbox, ['MESSAGES'])['MESSAGES']
     end
   
     def recent_message_count
-      @connection.status(id, ['RECENT'])['RECENT']
+      @connection.status(@mailbox, ['RECENT'])['RECENT']
     end
   
     def unseen_message_count
-      @connection.status(id, ['UNSEEN'])['UNSEEN']
+      @connection.status(@mailbox, ['UNSEEN'])['UNSEEN']
     end
   
     def messages(options = {})
@@ -210,6 +229,14 @@ module ActiveImap
         messages << ActiveImap::Message.find(self, message_id)
       end
       messages
+    end
+    
+    def self.mailbox_to_id(mailbox)
+      return mailbox.to_s.gsub(/./){|c| "%x" % c[0]}
+    end
+    
+    def self.id_to_mailbox(id)
+      return (id.reverse+'0').scan(/../).reverse.map{|c| c.reverse.hex.chr}*''
     end
   end
 end

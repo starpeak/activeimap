@@ -1,0 +1,7 @@
+en:
+  activemodel:
+    models:
+      active_imap/folder: "Imap Folder"
+      active_imap/message: "Imap Message"
+  activeimap:
+    connection_lost: "Connection lost"
