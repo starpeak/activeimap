@@ -17,7 +17,6 @@ module ActiveImap
     def initialize(connection, options = {})
       @connection = connection
       attributes = options
-      @id = nil
       @mailbox = options[:mailbox] || nil
       @attrs = options[:attrs] || []
       @persisted = options[:persisted] || false      
@@ -78,7 +77,6 @@ module ActiveImap
       unless mailbox == new_mailbox     
         @connection.rename mailbox, new_mailbox
         @mailbox = new_mailbox
-        @id = nil
         @parent = nil
       end
     end
