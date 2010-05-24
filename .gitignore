@@ -1,0 +1,8 @@
+.DS_Store
+log/*.log
+coverage*
+.bundle/config
+pkg
+tmp
+rdoc
+spec/support/connection_credentials.rb

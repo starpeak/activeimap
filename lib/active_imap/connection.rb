@@ -6,8 +6,11 @@ module ActiveImap
     end
     
     def logout_and_disconnect
-      @imap.logout
-      @imap.disconnect
+      begin
+        @imap.logout
+        @imap.disconnect
+      rescue
+      end
     end
     
     def folders(options = {})

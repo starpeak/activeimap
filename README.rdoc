@@ -7,7 +7,7 @@ So Installation does not work nor there is an API Documentation.
 
 == Installation
 
-* Add ActiveImap to your Rails application's Gemfile. It does require rails 3 as it uses ActiveModel.
+* Add ActiveImap to your Rails application's Gemfile. It does require Rails 3 as it uses ActiveModel.
     gem 'activeimap',         :git => 'git://github.com/starpeak/activeimap.git'
 
 

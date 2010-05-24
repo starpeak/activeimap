@@ -203,8 +203,6 @@ module ActiveImap
         conditions = options[:conditions].to_s.split(',').map{|o| o.strip.upcase}
       end
     
-      puts "Sort: order: #{order.to_json}, :conditions: #{conditions.to_json}"
-    
       messages = []
     
       select
