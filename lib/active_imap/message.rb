@@ -28,6 +28,10 @@ module ActiveImap
       ActiveImap::Message.new(folder, :id => id, :persisted => true)
     end
     
+    def self.all(folder)
+      folder.messages
+    end
+    
     def persisted?
       @persisted ||= false
     end
@@ -48,9 +52,8 @@ module ActiveImap
       if folder.select
         msg = @connection.fetch(id, "ENVELOPE")[0]
         envelope = msg.attr["ENVELOPE"]
-        envelope_from = envelope.try(:from)[0]
         
-        puts msg
+        #puts msg
         
         @envelope = {
           :uid => ActiveImap::Rfc2047.decode(msg.attr["UID"]),
@@ -58,10 +61,24 @@ module ActiveImap
           :date => ActiveImap::Rfc2047.decode(envelope.try(:date)),
           #:internal_date => ActiveImap::Rfc2047.decode(msg.attr["INTERNALDATE"]),
           :size => @connection.fetch(id, "RFC822.SIZE")[0].attr["RFC822.SIZE"],
-          :from_name => ActiveImap::Rfc2047.decode(envelope_from.try(:name)),
-          :from_email => "#{ActiveImap::Rfc2047.decode(envelope_from.try(:mailbox))}@#{ActiveImap::Rfc2047.decode(envelope_from.try(:host))}",
-          
         }
+        [:from, :to, :cc, :reply_to, :bcc, :sender].each do |field|
+          @envelope[field] = []
+
+          envelope_actors = envelope.try(field)
+          
+          if envelope_actors
+            envelope_actors.each do |envelope_actor| 
+              @envelope[field] << ActiveImap::Actor.new({
+                :name => ActiveImap::Rfc2047.decode(envelope_actor.try(:name)),
+                :user => ActiveImap::Rfc2047.decode(envelope_actor.try(:mailbox)),
+                :host => ActiveImap::Rfc2047.decode(envelope_actor.try(:host))
+              })
+            end  
+          end
+        end
+        
+        return @envelope
       else
         raise "Folder could not be selected: #{@folder.id}"
       end
@@ -71,20 +88,31 @@ module ActiveImap
       envelope[:subject] 
     end
     
-    def from_name
-      envelope[:from_name]
-    end
-    
-    def from_email
-      envelope[:from_email]
-    end
     
     def from
-      "#{from_name} <#{from_email}>"
+      envelope[:from]
+    end
+     
+    def sender
+      envelope[:sender]
     end
     
-    # same as for from for sender, reply_to, to, cc, bcc
+    def to
+      envelope[:to]
+    end
     
+    def reply_to
+      envelope[:reply_to]
+    end
+    
+    def cc
+      envelope[:cc]
+    end
+    
+    def bcc
+      envelope[:bcc]
+    end
+            
     def date
       begin
         Time.parse(envelope[:date])
@@ -92,7 +120,7 @@ module ActiveImap
       end
     end
     
-    def mail_size
+    def size
       envelope[:size]
     end
     

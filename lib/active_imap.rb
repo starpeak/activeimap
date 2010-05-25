@@ -33,6 +33,7 @@ module ActiveImap
   autoload :Rfc2047
   autoload :Folder
   autoload :Message
+  autoload :Actor
   
   class << self  
     
