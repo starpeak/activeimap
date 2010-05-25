@@ -124,6 +124,19 @@ module ActiveImap
       envelope[:size]
     end
     
+    # In Rails views you should use
+    # number_to_human_size size
+    # instead for internationalization
+    def human_size
+      count = 0
+      n = size
+      while n >= 1024 and count < 4
+        n /= 1024.0
+        count += 1
+      end
+      format("%.1f",n) + %w(B kB MB GB TB)[count]
+    end
+    
     def body
       return @body if @body
       if @folder.select
