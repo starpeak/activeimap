@@ -137,10 +137,61 @@ module ActiveImap
       format("%.1f",n) + %w(B kB MB GB TB)[count]
     end
     
+    def flags
+      return @flags if @flags
+      if @folder.select
+        @flags = @connection.fetchData(id, "FLAGS")[0].try(:attr)["FLAGS"]
+      else
+        raise "Folder could not be selected: #{@folder.id}"
+      end
+    end
+    
+    def flagged?
+      flags.include? :Flagged
+    end
+    
+    def unseen?
+      flags.include? :Unseen
+    end
+    
+    def junk?
+      flags.include? :JunkRecorded
+    end
+    
+    def answered?
+      flags.include? :Answered
+    end
+    
+    def draft?
+      flags.include? :Draft
+    end
+    
+    def deleted?
+      flags.include? :Deleted
+    end
+    
+    def raw
+      return @raw if @raw
+      if @folder.select
+        @raw = @connection.fetchData(id, "BODY[]")[0].try(:attr)["BODY[]"]
+      else
+        raise "Folder could not be selected: #{@folder.id}"
+      end
+    end
+    
     def body
       return @body if @body
       if @folder.select
         @body = @connection.fetchData(id, "BODY[TEXT]")[0].try(:attr)["BODY[TEXT]"]
+      else
+        raise "Folder could not be selected: #{@folder.id}"
+      end
+    end
+    
+    def body_structure
+      return @body_structure if @body_structure
+      if @folder.select
+        @body_structure = @connection.fetchData(id, "BODYSTRUCTURE")[0].try(:attr)["BODYSTRUCTURE"]
       else
         raise "Folder could not be selected: #{@folder.id}"
       end

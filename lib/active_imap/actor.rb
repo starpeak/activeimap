@@ -3,7 +3,7 @@ module ActiveImap
     attr_accessor :name, :user, :host
     
     def initialize(options = {})
-      @name = options[:name]
+      @name = options[:name].gsub(/^"/, '').gsub(/"$/, '').strip
       @user = options[:user]
       @host = options[:host]
     end
@@ -12,12 +12,12 @@ module ActiveImap
       "#{user}@#{host}"
     end
     
-    def human
-      name.blank? ? email : "#{name} <#{email}>"
+    def human(options={})
+      name.blank? ? email : options[:format] and options[:format].to_sym == :short ? name : "#{name} <#{email}>"
     end
     
     def to_s
-      human
+      human :format => :short
     end
   end
 end
