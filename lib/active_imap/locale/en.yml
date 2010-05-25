@@ -1,7 +1,22 @@
 en:
   activemodel:
     models:
-      active_imap/folder: "Imap Folder"
-      active_imap/message: "Imap Message"
+      active_imap/folder: 
+        one: "Imap Folder"
+        other: "Imap Folders"
+      active_imap/message: 
+        one: "Imap Message"
+        other: "Imap Messages"
+    attributes:
+      active_imap/message:
+        from: "From"
+        reply_to: "Reply to"
+        sender: "Sender"
+        to: "To"
+        cc: "CC"
+        bcc: "BCC"
+        subject: "Subject"
+        
+      
   activeimap:
     connection_lost: "Connection lost"

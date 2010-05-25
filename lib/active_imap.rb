@@ -48,4 +48,4 @@ module ActiveImap
 end
 
 require 'active_support/i18n'
-I18n.load_path << File.dirname(__FILE__) + '/active_imap/locale/en.yml'
+I18n.load_path += Dir.glob("#{File.dirname(__FILE__)}/active_imap/locale/*.yml")

@@ -1,0 +1,22 @@
+de:
+  activemodel:
+    models:
+      active_imap/folder: 
+        one: "Imap Ordner"
+        other: "Imap Ordner"
+      active_imap/message: 
+        one: "Imap Nachricht"
+        other: "Imap Nachrichten"
+    attributes:
+      active_imap/message:
+        from: "Von"
+        reply_to: "Antworten an"
+        sender: "Absender"
+        to: "An"
+        cc: "Kopie"
+        bcc: "Blindkopie"
+        subject: "Betreff"
+        
+      
+  activeimap:
+    connection_lost: "Verbindung getrennt"
