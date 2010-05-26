@@ -8,10 +8,10 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Sven G. Broenstrup"]
-  s.date = %q{2010-05-25}
+  s.date = %q{2010-05-26}
   s.description = %q{An ActiveModel based IMAP Accessor }
   s.email = %q{info@spom.net}
-  s.files = ["lib/active_imap", "lib/active_imap/actor.rb", "lib/active_imap/config.rb", "lib/active_imap/connection.rb", "lib/active_imap/folder.rb", "lib/active_imap/locale", "lib/active_imap/locale/en.yml", "lib/active_imap/message.rb", "lib/active_imap/rfc2047.rb", "lib/active_imap.rb", "VERSION", "README.rdoc"]
+  s.files = ["lib/active_imap", "lib/active_imap/actor.rb", "lib/active_imap/body_part.rb", "lib/active_imap/config.rb", "lib/active_imap/connection.rb", "lib/active_imap/folder.rb", "lib/active_imap/locale", "lib/active_imap/locale/de.yml", "lib/active_imap/locale/en.yml", "lib/active_imap/message.rb", "lib/active_imap/rfc2047.rb", "lib/active_imap.rb", "VERSION", "README.rdoc"]
   s.homepage = %q{http://spom.net/}
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
@@ -24,12 +24,15 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<activesupport>, [">= 3.0.0.beta3"])
       s.add_runtime_dependency(%q<activemodel>, [">= 3.0.0.beta3"])
+      s.add_runtime_dependency(%q<mail>, [">= 2.2.0"])
     else
       s.add_dependency(%q<activesupport>, [">= 3.0.0.beta3"])
       s.add_dependency(%q<activemodel>, [">= 3.0.0.beta3"])
+      s.add_dependency(%q<mail>, [">= 2.2.0"])
     end
   else
     s.add_dependency(%q<activesupport>, [">= 3.0.0.beta3"])
     s.add_dependency(%q<activemodel>, [">= 3.0.0.beta3"])
+    s.add_dependency(%q<mail>, [">= 2.2.0"])
   end
 end

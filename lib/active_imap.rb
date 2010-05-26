@@ -23,6 +23,7 @@
 
 module ActiveImap
   require 'net/imap'
+  require 'mail'
   require 'active_support'
   require 'active_model'
   
@@ -33,6 +34,7 @@ module ActiveImap
   autoload :Rfc2047
   autoload :Folder
   autoload :Message
+  autoload :BodyPart
   autoload :Actor
   
   class << self  

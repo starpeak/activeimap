@@ -43,6 +43,7 @@ spec = Gem::Specification.new do |s|
   s.version = ::File.read(::File.join(::File.dirname(__FILE__), "VERSION")).strip
   s.add_dependency 'activesupport', '>= 3.0.0.beta3'
   s.add_dependency 'activemodel', '>= 3.0.0.beta3'
+  s.add_dependency 'mail', '>= 2.2.0'
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|

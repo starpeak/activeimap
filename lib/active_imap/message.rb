@@ -174,31 +174,72 @@ module ActiveImap
       return @raw if @raw
       if @folder.select
         @raw = @connection.fetchData(id, "BODY[]")[0].try(:attr)["BODY[]"]
+        
+        # This is a quick workaround for Mail parsing the beginning of a
+        # mail without multipart containing lines with spaces within the
+        # header 
+        
+        mail_text = ''
+        in_body = false
+        @raw.split("\n").each do |l| 
+          in_body = true if l.size <= 1
+          mail_text += "#{l}\n" if not l.match(/^(\s)+$/) or in_body
+        end
+        @raw = mail_text
       else
         raise "Folder could not be selected: #{@folder.id}"
       end
     end
     
-    def body
-      return @body if @body
-      if @folder.select
-        @body = @connection.fetchData(id, "BODY[TEXT]")[0].try(:attr)["BODY[TEXT]"]
+    private
+    def parse_parts(part)
+      if part.multipart?
+        part.parts.each do |p|
+          parse_parts(p)
+        end
       else
-        raise "Folder could not be selected: #{@folder.id}"
+        @body_parts << ActiveImap::BodyPart.new(
+          self,
+          :content_type => part.content_type, 
+          :charset => part.charset,
+          :content => part.body.decoded
+        )
       end
     end
     
-    def body_structure
-      return @body_structure if @body_structure
-      if @folder.select
-        @body_structure = @connection.fetchData(id, "BODYSTRUCTURE")[0].try(:attr)["BODYSTRUCTURE"]
+    public
+    def body_parts
+      return @body_parts if @body_parts
+      @body_parts = []
+      
+      mail = Mail.new(raw)    
+      parse_parts mail
+      @html_content = mail.html_part
+      @html_content = @html_content ? Iconv.iconv(ActiveImap::config.charset, @html_content.charset, @html_content.body.to_s) : ''
+      @text_content = mail.text_part
+      @text_content = @text_content ? Iconv.iconv(ActiveImap::config.charset, @text_content.charset, @text_content.body.to_s) : Iconv.iconv(ActiveImap::config.charset, @body_parts.first.charset, @body_parts.first.content)
+      @body_parts
+    end
+    
+    def html_content
+      body_parts unless @html_content
+      return @html_content 
+    end
+    
+    def text_content
+      body_parts unless @text_content
+      return @text_content
+      
+      
+      if body_parts.size > 1
+        body_parts.each do |part|
+          return Iconv.iconv(ActiveImap::config.charset, part.charset, part.content) if part.content_type.include? 'text/'
+        end
+        return 'No Text included'
       else
-        raise "Folder could not be selected: #{@folder.id}"
+        return body_parts.first.content
       end
     end
     
-    def body_text
-      body
-    end
   end
 end
