@@ -151,7 +151,7 @@ module ActiveImap
     end
     
     def unseen?
-      flags.include? :Unseen
+      not flags.include? :Seen
     end
     
     def junk?
